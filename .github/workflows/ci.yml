@@ -3,9 +3,17 @@ on:
   push:
     branches: [main]
   pull_request:
+
+# Cancel a previous CI run on the same ref if a new commit lands before it finishes.
+# Lets judges mash the chaos button without the Actions queue backing up.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
