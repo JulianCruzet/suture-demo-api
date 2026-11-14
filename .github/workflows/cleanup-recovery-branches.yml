@@ -1,0 +1,23 @@
+name: cleanup-recovery-branches
+# When a recovery/<action_id> PR closes (merged or not), delete the branch so the
+# repo stays tidy across many demo runs. Only touches branches whose name starts
+# with "recovery/" — hand-made branches are safe.
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  delete:
+    if: startsWith(github.event.pull_request.head.ref, 'recovery/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete head branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          echo "Deleting branch: $BRANCH"
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH" || true

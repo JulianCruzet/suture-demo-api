@@ -1,0 +1,31 @@
+name: reset-demo
+# Manual one-click reset. Closes every open PR whose head is recovery/* and
+# deletes the branch. Run before a demo recording to start from a clean slate.
+# Trigger from the Actions tab: "reset-demo" -> "Run workflow".
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close open recovery/* PRs and delete their branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          mapfile -t prs < <(gh pr list --repo "$REPO" --state open --limit 200 \
+            --json number,headRefName --jq '.[] | select(.headRefName | startswith("recovery/")) | "\(.number)|\(.headRefName)"')
+          echo "Found ${#prs[@]} open recovery/* PR(s)"
+          for row in "${prs[@]}"; do
+            num="${row%%|*}"; branch="${row#*|}"
+            echo "Closing PR #$num on $branch"
+            gh pr close "$num" --repo "$REPO" --comment "Reset by reset-demo workflow." || true
+            gh api -X DELETE "repos/$REPO/git/refs/heads/$branch" || true
+          done
+          echo "Done."
