@@ -5,7 +5,7 @@
   "description": "Sandbox service that suture repairs live in the demo.",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "node --no-experimental-require-module test.js"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
